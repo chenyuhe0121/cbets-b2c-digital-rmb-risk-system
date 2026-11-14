@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+      - name: 业务层自检
+        run: python scripts/smoke_local.py
+      - name: 资金守卫回归
+        run: python scripts/guard_tests.py
+      - name: 启动服务
+        run: |
+          python -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/healthz && break
+            sleep 2
+          done
+      - name: HTTP 端到端
+        run: python scripts/e2e_http.py http://127.0.0.1:8000
+      - name: Docker 构建
+        run: docker build -t cbets-b2c-risk-system:ci .

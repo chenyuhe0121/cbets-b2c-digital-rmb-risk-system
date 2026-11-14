@@ -1,0 +1,515 @@
+{
+  "metrics": {
+    "orders": {
+      "total": 5,
+      "by_status": {
+        "completed": 2,
+        "paid_escrowed": 1,
+        "refunded": 1,
+        "risk_blocked": 1
+      },
+      "paid": 4,
+      "risk_blocked": 1
+    },
+    "money": {
+      "gmv_cents": 101700,
+      "released_gross_cents": 59800,
+      "refunded_cents": 12000,
+      "escrow_locked_cents": 29900,
+      "platform_fee_bps": 60
+    },
+    "risk": {
+      "records": 8,
+      "avg_score": 0.126,
+      "decisions": {
+        "block": 1,
+        "pass": 7
+      },
+      "block_rate": 0.125
+    },
+    "after_sales": {
+      "disputes": 1,
+      "arbitrating": 0
+    },
+    "models": {
+      "buyer": "lr-64a2796b",
+      "seller": "lr-d5442e9d"
+    },
+    "ledger": {
+      "valid": true,
+      "entries": 7,
+      "head_hash": "43d7172a5146513284bb29afe67c7ec862ccaed2326b3bdd659e5ca83a0f330f"
+    }
+  },
+  "audit": {
+    "valid": true,
+    "entries": 7,
+    "head_hash": "43d7172a5146513284bb29afe67c7ec862ccaed2326b3bdd659e5ca83a0f330f"
+  },
+  "orders": {
+    "items": [
+      {
+        "order_id": "ORD3508CE4C926948",
+        "buyer_id": "BUY-DEMO-001",
+        "seller_id": "SELL-DEMO-001",
+        "amount_cents": 29900,
+        "currency": "CNY",
+        "sku_desc": "夏季连衣裙 2 件",
+        "status": "paid_escrowed",
+        "review_flag": 0,
+        "hold_until": "2026-11-17T13:11:10+00:00",
+        "created_at": "2026-11-14T13:11:01+00:00",
+        "paid_at": "2026-11-14T13:11:10+00:00",
+        "shipped_at": null,
+        "received_at": null,
+        "closed_at": null,
+        "contract_status": "locked"
+      },
+      {
+        "order_id": "ORD-1",
+        "buyer_id": "BUY-DEMO-001",
+        "seller_id": "SELL-DEMO-001",
+        "amount_cents": 29900,
+        "currency": "CNY",
+        "sku_desc": "夏季连衣裙 2 件",
+        "status": "completed",
+        "review_flag": 0,
+        "hold_until": "2026-11-17T13:03:51+00:00",
+        "created_at": "2026-11-14T13:03:28+00:00",
+        "paid_at": "2026-11-14T13:03:51+00:00",
+        "shipped_at": "2026-11-14T13:04:00+00:00",
+        "received_at": "2026-11-14T13:04:05+00:00",
+        "closed_at": "2026-11-14T13:04:11+00:00",
+        "contract_status": "released"
+      },
+      {
+        "order_id": "ORD6D9A90514E624B",
+        "buyer_id": "BUY-DEMO-001",
+        "seller_id": "SELL-DEMO-001",
+        "amount_cents": 12000,
+        "currency": "CNY",
+        "sku_desc": "??? 1 ?",
+        "status": "refunded",
+        "review_flag": 0,
+        "hold_until": "2026-11-17T13:02:04+00:00",
+        "created_at": "2026-11-14T13:02:04+00:00",
+        "paid_at": "2026-11-14T13:02:04+00:00",
+        "shipped_at": null,
+        "received_at": null,
+        "closed_at": "2026-11-14T13:02:04+00:00",
+        "contract_status": "refunded"
+      },
+      {
+        "order_id": "ORD1F86901E8E0B4F",
+        "buyer_id": "BUY-DEMO-002",
+        "seller_id": "SELL-DEMO-001",
+        "amount_cents": 18800,
+        "currency": "CNY",
+        "sku_desc": "????",
+        "status": "risk_blocked",
+        "review_flag": 0,
+        "hold_until": null,
+        "created_at": "2026-11-14T13:02:04+00:00",
+        "paid_at": null,
+        "shipped_at": null,
+        "received_at": null,
+        "closed_at": null,
+        "contract_status": null
+      },
+      {
+        "order_id": "ORDEA7CCEB824DC4E",
+        "buyer_id": "BUY-DEMO-001",
+        "seller_id": "SELL-DEMO-001",
+        "amount_cents": 29900,
+        "currency": "CNY",
+        "sku_desc": "????? 2 ?",
+        "status": "completed",
+        "review_flag": 0,
+        "hold_until": "2026-11-17T13:02:03+00:00",
+        "created_at": "2026-11-14T13:02:03+00:00",
+        "paid_at": "2026-11-14T13:02:03+00:00",
+        "shipped_at": "2026-11-14T13:02:03+00:00",
+        "received_at": "2026-11-14T13:02:04+00:00",
+        "closed_at": "2026-11-14T13:02:04+00:00",
+        "contract_status": "released"
+      }
+    ]
+  },
+  "rules": {
+    "items": [
+      {
+        "rule_id": "B01",
+        "scope": "buyer",
+        "name": "买家7天内高频退款",
+        "field": "refund_7d",
+        "op": "gte",
+        "threshold": 5,
+        "action": "block",
+        "weight": 0.85,
+        "extra": {},
+        "description": "7 日内退款次数达到 5 次，按异常退款账户处理。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "B02",
+        "scope": "buyer",
+        "name": "钱包未实名",
+        "field": "real_name_level",
+        "op": "eq",
+        "threshold": 0,
+        "action": "block",
+        "weight": 0.9,
+        "extra": {},
+        "description": "数字人民币钱包实名等级为 0，不具备支付条件。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "B03",
+        "scope": "buyer",
+        "name": "凌晨大额交易",
+        "field": "hour",
+        "op": "between",
+        "threshold": [
+          0,
+          5
+        ],
+        "action": "review",
+        "weight": 0.4,
+        "extra": {
+          "amount_gte_cents": 50000
+        },
+        "description": "0-6 点且单笔金额达到 500 元的交易进入人工复核。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "B04",
+        "scope": "buyer",
+        "name": "历史欺诈标记",
+        "field": "fraud_tag",
+        "op": "eq",
+        "threshold": 1,
+        "action": "block",
+        "weight": 0.95,
+        "extra": {},
+        "description": "买家存在已确认的欺诈记录。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "B05",
+        "scope": "buyer",
+        "name": "单笔金额偏离历史均值",
+        "field": "amount_deviation_ratio",
+        "op": "gte",
+        "threshold": 5.0,
+        "action": "review",
+        "weight": 0.35,
+        "extra": {},
+        "description": "单笔金额超过该买家历史均值 5 倍。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "B06",
+        "scope": "buyer",
+        "name": "历史拒付",
+        "field": "chargeback_cnt",
+        "op": "gte",
+        "threshold": 1,
+        "action": "review",
+        "weight": 0.3,
+        "extra": {},
+        "description": "买家存在拒付记录。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "S01",
+        "scope": "seller",
+        "name": "近30天投诉率过高",
+        "field": "complaint_rate_30d",
+        "op": "gte",
+        "threshold": 0.25,
+        "action": "review",
+        "weight": 0.45,
+        "extra": {},
+        "description": "近 30 天投诉率超过 25%。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "S02",
+        "scope": "seller",
+        "name": "虚假发货历史",
+        "field": "fake_delivery_cnt",
+        "op": "gte",
+        "threshold": 2,
+        "action": "block",
+        "weight": 0.85,
+        "extra": {},
+        "description": "已确认虚假发货达到 2 次。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "S03",
+        "scope": "seller",
+        "name": "揽收时间早于下单",
+        "field": "logistics_offset_hours",
+        "op": "lt",
+        "threshold": 0,
+        "action": "block",
+        "weight": 0.9,
+        "extra": {},
+        "description": "物流揽收时间早于下单时间，属于典型刷单特征。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "S04",
+        "scope": "seller",
+        "name": "商户黑名单",
+        "field": "blacklist_flag",
+        "op": "eq",
+        "threshold": 1,
+        "action": "block",
+        "weight": 0.95,
+        "extra": {},
+        "description": "商户在平台风险黑名单内。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "S05",
+        "scope": "seller",
+        "name": "禁售或侵权商品",
+        "field": "listing_violation_flag",
+        "op": "eq",
+        "threshold": 1,
+        "action": "block",
+        "weight": 0.9,
+        "extra": {},
+        "description": "商品命中禁售或侵权规则。",
+        "enabled": 1
+      },
+      {
+        "rule_id": "S06",
+        "scope": "seller",
+        "name": "订单量异常突增",
+        "field": "order_growth_ratio",
+        "op": "gte",
+        "threshold": 3.0,
+        "action": "review",
+        "weight": 0.35,
+        "extra": {},
+        "description": "单日订单量相对近 7 日均值突增 3 倍以上。",
+        "enabled": 1
+      }
+    ]
+  },
+  "models": {
+    "buyer": {
+      "kind": "buyer",
+      "version": "lr-64a2796b",
+      "metrics": {
+        "auc_valid": 0.9904,
+        "samples": 4000,
+        "positive_rate": 0.188,
+        "epochs": 700
+      },
+      "feature_names": [
+        "refund_7d",
+        "refund_rate_90d",
+        "chargeback_cnt",
+        "account_age_days",
+        "real_name_level",
+        "device_change",
+        "ip_country_mismatch",
+        "address_flag",
+        "amount_deviation_ratio",
+        "hour",
+        "cross_border",
+        "fraud_tag"
+      ],
+      "weights": [
+        1.6361105426420859,
+        1.6473606775219598,
+        0.31630222698200816,
+        -0.6143493495486605,
+        -0.019419290481413595,
+        0.14347648050130127,
+        0.179694262913541,
+        0.05812342284690756,
+        0.5750009034833828,
+        -0.08015477281963954,
+        0.0,
+        0.3332486501885947
+      ]
+    },
+    "seller": {
+      "kind": "seller",
+      "version": "lr-d5442e9d",
+      "metrics": {
+        "auc_valid": 0.9847,
+        "samples": 4000,
+        "positive_rate": 0.1445,
+        "epochs": 700
+      },
+      "feature_names": [
+        "complaint_rate_30d",
+        "fake_delivery_cnt",
+        "logistics_offset_hours",
+        "shop_age_days",
+        "penalty_cnt",
+        "blacklist_flag",
+        "listing_violation_flag",
+        "order_growth_ratio",
+        "dispute_rate_30d",
+        "avg_ship_hours"
+      ],
+      "weights": [
+        1.048239042747632,
+        0.44675615754009573,
+        -0.6028180167497463,
+        -0.21726855037452494,
+        0.30232256005057706,
+        0.15056484844303222,
+        0.16340884132441827,
+        0.8316927706903544,
+        0.9023650199034855,
+        0.3713045878661741
+      ]
+    }
+  },
+  "escrow": {
+    "account": {
+      "seller_id": "SELL-DEMO-001",
+      "currency": "CNY",
+      "locked_cents": 29900,
+      "settled_cents": 59442,
+      "refunded_cents": 12000,
+      "frozen": 0,
+      "frozen_reason": null,
+      "updated_at": "2026-11-14T13:11:10+00:00"
+    },
+    "entries": [
+      {
+        "seq": 7,
+        "entry_type": "LOCK",
+        "amount_cents": 29900,
+        "locked_after": 29900,
+        "settled_after": 59442,
+        "order_id": "ORD3508CE4C926948",
+        "ref_no": "CB2153E69CB4A83F554C40",
+        "memo": "支付成功，货款进入担保子钱包",
+        "entry_hash": "43d7172a5146513284bb29afe67c7ec862ccaed2326b3bdd659e5ca83a0f330f",
+        "created_at": "2026-11-14T13:11:10+00:00"
+      },
+      {
+        "seq": 6,
+        "entry_type": "RELEASE",
+        "amount_cents": -29900,
+        "locked_after": 0,
+        "settled_after": 59442,
+        "order_id": "ORD-1",
+        "ref_no": "release:ORD-1",
+        "memo": "履约完成，货款释放给商户（平台费 179 分）",
+        "entry_hash": "39cb0024fa5a0d82286795eff8e0e2ccb39e298ad1557f31779907512506840c",
+        "created_at": "2026-11-14T13:04:11+00:00"
+      },
+      {
+        "seq": 5,
+        "entry_type": "LOCK",
+        "amount_cents": 29900,
+        "locked_after": 29900,
+        "settled_after": 29721,
+        "order_id": "ORD-1",
+        "ref_no": "CBC246B6D01AD973A1198B",
+        "memo": "支付成功，货款进入担保子钱包",
+        "entry_hash": "0eee90c7614b291912d820b348df2cd97a5bfed4a35801e4cdb8550c658f73d8",
+        "created_at": "2026-11-14T13:03:51+00:00"
+      },
+      {
+        "seq": 4,
+        "entry_type": "REFUND",
+        "amount_cents": -12000,
+        "locked_after": 0,
+        "settled_after": 29721,
+        "order_id": "ORD6D9A90514E624B",
+        "ref_no": "DPE41B9915905549",
+        "memo": "售后退款：7天无理由全额退货",
+        "entry_hash": "838683309202d5619b44de3f9308db3647625eb5da5344487b5888346b1a1096",
+        "created_at": "2026-11-14T13:02:04+00:00"
+      },
+      {
+        "seq": 3,
+        "entry_type": "LOCK",
+        "amount_cents": 12000,
+        "locked_after": 12000,
+        "settled_after": 29721,
+        "order_id": "ORD6D9A90514E624B",
+        "ref_no": "CB6F87FB2120B6CDDC3288",
+        "memo": "支付成功，货款进入担保子钱包",
+        "entry_hash": "382de25cd8bf66a47e73907627d7795d8dfa869c6c57dad9c13fea559be260ac",
+        "created_at": "2026-11-14T13:02:04+00:00"
+      },
+      {
+        "seq": 2,
+        "entry_type": "RELEASE",
+        "amount_cents": -29900,
+        "locked_after": 0,
+        "settled_after": 29721,
+        "order_id": "ORDEA7CCEB824DC4E",
+        "ref_no": "release:ORDEA7CCEB824DC4E",
+        "memo": "履约完成，货款释放给商户（平台费 179 分）",
+        "entry_hash": "6c7c4142d4f9e78878a6a410ea405ec68305d7ec169b19718974cd321aecf79c",
+        "created_at": "2026-11-14T13:02:04+00:00"
+      },
+      {
+        "seq": 1,
+        "entry_type": "LOCK",
+        "amount_cents": 29900,
+        "locked_after": 29900,
+        "settled_after": 0,
+        "order_id": "ORDEA7CCEB824DC4E",
+        "ref_no": "CBCAB08D903724CA5A58B5",
+        "memo": "支付成功，货款进入担保子钱包",
+        "entry_hash": "c0d1529651567cd7635434d34841831c25915ebb8dfefdc9ef3695f0adedb284",
+        "created_at": "2026-11-14T13:02:03+00:00"
+      }
+    ],
+    "reconcile": {
+      "seller_id": "SELL-DEMO-001",
+      "account_locked_cents": 29900,
+      "contract_locked_cents": 29900,
+      "consistent": true
+    }
+  },
+  "consistency": {
+    "ledger_chain": {
+      "valid": true,
+      "entries": 7,
+      "head_hash": "43d7172a5146513284bb29afe67c7ec862ccaed2326b3bdd659e5ca83a0f330f"
+    },
+    "escrow": {
+      "checks": [
+        {
+          "seller_id": "SELL-DEMO-001",
+          "account_locked_cents": 29900,
+          "contract_locked_cents": 29900,
+          "consistent": true
+        },
+        {
+          "seller_id": "SELL-DEMO-002",
+          "account_locked_cents": 0,
+          "contract_locked_cents": 0,
+          "consistent": true
+        }
+      ],
+      "all_consistent": true
+    },
+    "wallet_credits": {
+      "missing_release": [],
+      "missing_refund": []
+    }
+  },
+  "health": {
+    "status": "ok",
+    "version": "1.0.0",
+    "adapter_mode": "mock",
+    "db": "D:\\学业\\课程\\数字创新\\期末作业\\cbets-b2c-risk-system\\data\\cbets_b2c.db"
+  }
+}
