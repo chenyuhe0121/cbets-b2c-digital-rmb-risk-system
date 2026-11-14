@@ -1,5 +1,7 @@
 __pycache__/
 *.py[cod]
+# 未在本机验证的 CI 流水线，暂不上传
+.github/workflows/
 .venv/
 venv/
 .env
