@@ -139,7 +139,18 @@ def receive(*, order_id: str) -> dict:
             state_machine.transition(c, order_id=order_id, event="receive")
             c.execute("INSERT INTO events(topic,aggregate_id,payload,created_at) VALUES(?,?,?,?)",
                       ("order.received", order_id, "{}", now_iso()))
+            ship = c.execute("SELECT tracking_no FROM shipments WHERE order_id=?",
+                             (order_id,)).fetchone()
+        # 买家确认收货即代表物流已签收，把运单状态推进到 delivered，
+        # 后续卖家申诉恶意退款时才能拿签收证明作反向主张。
+        tracking = ship["tracking_no"] if ship else None
+        if tracking:
+            try:
+                logistics().mark_delivered(tracking, signed_by="buyer")
+            except Exception:
+                pass
         return {"result": "received", "order": order_detail(conn, order_id),
+                "tracking_status": "delivered" if tracking else None,
                 "next": "确认收货后可释放担保资金；在售后窗口内仍可发起售后"}
     finally:
         conn.close()

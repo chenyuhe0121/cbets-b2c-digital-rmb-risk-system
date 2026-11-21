@@ -8,10 +8,10 @@ import uuid
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
-from ..adapters import chain
+from ..adapters import chain, wallet
 from ..audit import merkle_root, verify_chain
 from ..contract import after_sales, escrow, state_machine
-from ..db import tx
+from ..db import connect, tx
 from ..errors import bad_request, not_found
 from .deps import get_conn, require_admin
 
@@ -32,6 +32,11 @@ class ArbitrateIn(BaseModel):
     note: str = ""
 
 
+class WithdrawIn(BaseModel):
+    amount_cents: int = Field(default=0, ge=0, description="0 表示提现全部可结算余额")
+    ref_no: str | None = None
+
+
 @router.get("/contract/{order_id}", summary="查询合约状态机")
 def contract(order_id: str, conn: sqlite3.Connection = Depends(get_conn)):
     c = state_machine.get_contract(conn, order_id)
@@ -50,6 +55,28 @@ def escrow_account(seller_id: str, limit: int = Query(50, le=200),
         (seller_id, limit)).fetchall()
     return {"account": acc, "entries": [dict(e) for e in entries],
             "reconcile": escrow.reconcile(conn, seller_id)}
+
+
+@router.post("/escrow/{seller_id}/withdraw", summary="商户结算提现：把已结算余额提走")
+def escrow_withdraw(seller_id: str, body: WithdrawIn | None = None):
+    body = body or WithdrawIn()
+    conn = connect()
+    try:
+        acc = escrow.account(conn, seller_id)
+        amount = body.amount_cents or int(acc["settled_cents"])
+        if amount <= 0:
+            raise bad_request("当前没有可提现的结算余额，担保中的货款未释放不能提")
+        ref = body.ref_no or "WD" + uuid.uuid4().hex[:12].upper()
+        with tx(conn) as c:
+            info = escrow.withdraw(c, seller_id=seller_id, amount_cents=amount, ref_no=ref)
+            row = c.execute("SELECT wallet_id FROM parties WHERE party_id=?",
+                            (seller_id,)).fetchone()
+        payout = None
+        if row:
+            payout = wallet().credit(wallet_id=row["wallet_id"], amount_cents=amount, ref_no=ref)
+        return {**info, "ref_no": ref, "payout": payout}
+    finally:
+        conn.close()
 
 
 @router.post("/orders/{order_id}/dispute", status_code=201, summary="发起售后（五类场景）")

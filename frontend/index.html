@@ -1,121 +1,399 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CBETS-B2C 支付与风控控制台</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CBETS-B2C 支付与风控控制台</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-role="buyer">
+
 <div class="topbar">
   <div>
     <h1>CBETS-B2C 跨境数字人民币支付与风控</h1>
-    <div class="sub">订单 · 双向欺诈评分 · 担保子钱包 · 售后仲裁 · 哈希链存证</div>
+    <div class="sub">买家端 · 卖家端 · 平台端 分角色控制台</div>
   </div>
   <div class="spacer"></div>
   <span class="pill" id="healthPill">连接中…</span>
   <span class="pill" id="adminState">管理员密钥：未设置</span>
 </div>
 
-<div class="layout">
-  <nav class="nav" id="nav">
-    <button data-view="trade" class="active">交易台</button>
-    <button data-view="orders">订单与合约</button>
-    <button data-view="risk">风控</button>
-    <button data-view="escrow">担保账本</button>
-    <button data-view="aftersales">售后与仲裁</button>
-    <button data-view="audit">存证审计</button>
-    <button data-view="metrics">指标与一致性</button>
-  </nav>
+<div class="rolebar">
+  <span class="rolebar-label">当前身份</span>
+  <div class="rolebar-btns" id="roleSwitch">
+    <button data-role="buyer" class="active"><b>买家端</b><span>Buyer</span></button>
+    <button data-role="seller"><b>卖家端</b><span>Seller</span></button>
+    <button data-role="platform"><b>平台端</b><span>Platform</span></button>
+    <button data-role="flow"><b>业务链路图</b><span>Flow</span></button>
+  </div>
+  <div class="rolebar-note" id="roleNote"></div>
+</div>
 
+<div class="layout">
+  <nav class="nav" id="nav"></nav>
   <main>
-    <!-- 交易台 -->
-    <section class="view active" id="view-trade">
-      <h2>下单与支付</h2>
-      <p class="hint">选择主体和金额，先生成订单；「事前风控」只评分不动钱，「发起支付」会真正走 CBETS、钱包扣款和担保入账。</p>
+
+    <!-- ============ 业务链路图 ============ -->
+    <section class="view" id="view-flow">
+      <h2>业务链路：谁在什么节点做什么</h2>
+      <p class="hint">按编号顺序读。三条泳道分别是买家、卖家、平台与监管方。点击任一节点，右侧给出「操作人 / 在原型哪个页面 / 系统动作 / 资金与状态变化」。</p>
+
+      <div class="loader2">
+        <div class="lanesWrap">
+          <div class="lane lane-buyer">
+            <div class="lane-label"><b>买家</b><span>Buyer</span></div>
+            <div class="lane-track" id="laneBuyer"></div>
+          </div>
+          <div class="lane lane-seller">
+            <div class="lane-label"><b>卖家</b><span>Seller</span></div>
+            <div class="lane-track" id="laneSeller"></div>
+          </div>
+          <div class="lane lane-platform">
+            <div class="lane-label"><b>平台 / 监管</b><span>Platform</span></div>
+            <div class="lane-track" id="lanePlatform"></div>
+          </div>
+        </div>
+        <div class="flowDetail" id="flowDetail">
+          <div class="flowDetail-empty">点击上方任一节点，查看这一步的操作者、原型位置与系统动作。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 买家端 ============ -->
+    <section class="view" id="view-b-shop">
+      <h2>买家：下单与支付</h2>
+      <p class="hint">选择商品与卖家，生成订单后先看风控评分，再发起支付。付款后资金进入担保子钱包，卖家此时拿不到钱。</p>
       <div class="card">
         <div class="grid c3">
           <div>
-            <label>买家</label>
-            <select id="buyerSel"></select>
+            <label>当前买家</label>
+            <select id="buyerIdentity"></select>
           </div>
           <div>
-            <label>商户</label>
-            <select id="sellerSel"></select>
+            <label>卖家</label>
+            <select id="shopSeller"></select>
           </div>
           <div>
-            <label>金额（元）</label>
-            <input id="amountInput" type="number" min="0.01" step="0.01" value="299.00">
+            <label>商品</label>
+            <select id="shopSku"></select>
           </div>
         </div>
         <div class="grid c3" style="margin-top:10px">
           <div>
-            <label>商品描述</label>
-            <input id="skuInput" value="夏季连衣裙 2 件">
+            <label>订单金额（元）</label>
+            <input id="shopAmount" type="number" min="0.01" step="0.01" value="299.00">
+          </div>
+          <div>
+            <label>收货国家 / 地区</label>
+            <select id="shopRegion">
+              <option value="SG">新加坡</option>
+              <option value="MY">马来西亚</option>
+              <option value="TH">泰国</option>
+              <option value="HK">中国香港</option>
+              <option value="US">美国</option>
+            </select>
           </div>
           <div>
             <label>订单号（留空自动生成）</label>
-            <input id="orderIdInput" placeholder="ORD-…">
-          </div>
-          <div>
-            <label>支付标记（可选）</label>
-            <input id="tokenInput" placeholder="先签发再粘贴，留空直接用钱包">
+            <input id="shopOrderId" placeholder="ORD-…">
           </div>
         </div>
         <div class="actions">
-          <button class="btn" id="btnCreate">创建订单</button>
-          <button class="btn ghost" id="btnPreview">事前风控</button>
-          <button class="btn" id="btnPay">发起支付</button>
-          <button class="btn ghost" id="btnIssueToken">签发支付标记</button>
-          <button class="btn ghost" id="btnTopup">给买家充值 1000 元</button>
+          <button class="btn" id="btnCreateOrder">创建订单</button>
+          <button class="btn ghost" id="btnRiskPreview">事前风控评分</button>
+          <button class="btn" id="btnPayOrder">发起支付</button>
+          <button class="btn ghost" id="btnTopupBuyer">演示充值 1000 元</button>
         </div>
-        <pre class="out" id="tradeOut">等待操作…</pre>
+        <div class="settleStrip" id="riskVerdict"></div>
+        <pre class="out" id="shopOut">等待操作…</pre>
+      </div>
+      <div class="card ruleCard">
+        <h2>买家这一端能做什么、不能做什么</h2>
+        <div class="ruleGrid">
+          <div class="ruleCol can">
+            <div class="ruleHead">可以操作</div>
+            <ul>
+              <li>浏览商品、选卖家、下单</li>
+              <li>发起支付，资金进入担保</li>
+              <li>签收确认、发起五类售后</li>
+              <li>查看自己的售后进度</li>
+            </ul>
+          </div>
+          <div class="ruleCol cannot">
+            <div class="ruleHead">不能操作</div>
+            <ul>
+              <li>看不到卖家的风控评分与规则命中</li>
+              <li>不能直接放款给卖家</li>
+              <li>不能修改风控规则或仲裁结论</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- 订单 -->
-    <section class="view" id="view-orders">
-      <h2>订单与合约</h2>
-      <p class="hint">点任意一行查看完整详情：风控评分与命中规则、合约状态、资金流水、运单、纠纷。</p>
+    <section class="view" id="view-b-orders">
+      <h2>买家：我的订单</h2>
+      <p class="hint">只显示当前买家自己的订单。点订单可查看担保状态与履约进度；签收由买家确认。</p>
       <div class="card">
         <div class="actions" style="margin-top:0">
-          <button class="btn ghost" id="btnReloadOrders">刷新</button>
+          <button class="btn ghost" id="btnBuyerRefresh">刷新我的订单</button>
         </div>
-        <div id="ordersTable" class="empty">尚未加载</div>
+        <div id="buyerOrders" class="empty">尚未加载</div>
       </div>
       <div class="card">
+        <h2 style="margin-bottom:10px">当前选中订单</h2>
+        <div class="grid c3">
+          <div>
+            <label>订单号</label>
+            <input id="buyerOrderId" placeholder="ORD-…">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="btnBuyerDetail">查看详情</button>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn" id="btnBuyerReceive">确认收货</button>
+          </div>
+        </div>
+        <pre class="out" id="buyerOrderOut">选择订单后在这里看详情…</pre>
+      </div>
+    </section>
+
+    <section class="view" id="view-b-claim">
+      <h2>买家：申请售后</h2>
+      <p class="hint">五类售后各有举证要求。能自动核验的当场处置；核验不了的转平台人工仲裁。7 天无理由需在签收后 7 天内发起。</p>
+      <div class="card">
+        <div class="grid c2">
+          <div>
+            <label>订单号</label>
+            <input id="claimOrderId" placeholder="ORD-…">
+          </div>
+          <div>
+            <label>售后场景</label>
+            <select id="claimType">
+              <option value="no_reason_return">7 天无理由退货</option>
+              <option value="partial_damage">部分货损 / 少发漏发</option>
+              <option value="logistics_loss">跨境物流丢件 / 破损</option>
+              <option value="fake_delivery">举报卖家虚假发货</option>
+            </select>
+          </div>
+        </div>
+        <div class="policyBox" id="claimPolicy"></div>
+        <div style="margin-top:10px">
+          <label>凭证补充说明（可选，写入证据包）</label>
+          <input id="claimNote" placeholder="例：外箱破损，开箱视频编号 VID-001">
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnOpenClaim">提交售后申请</button>
+        </div>
+        <pre class="out" id="claimOut">等待操作…</pre>
+      </div>
+    </section>
+
+    <section class="view" id="view-b-track">
+      <h2>买家：售后进度</h2>
+      <p class="hint">输入纠纷号查询当前处置状态。买家只能看结果，不能改裁决。</p>
+      <div class="card">
+        <div class="grid c2">
+          <div>
+            <label>纠纷号</label>
+            <input id="trackDisputeId" placeholder="DP…">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="btnTrack">查询进度</button>
+          </div>
+        </div>
+        <div id="trackTimeline" class="timeline"></div>
+        <pre class="out" id="trackOut">等待查询…</pre>
+      </div>
+    </section>
+
+    <!-- ============ 卖家端 ============ -->
+    <section class="view" id="view-s-desk">
+      <h2>卖家：待发货工作台</h2>
+      <p class="hint">只显示当前卖家已收款、待发货的订单。发货必须填运单号，揽收核验通过后物流事件才会上链。</p>
+      <div class="card">
+        <div class="grid c2">
+          <div>
+            <label>当前卖家</label>
+            <select id="sellerIdentity"></select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="btnSellerRefresh">刷新待发货</button>
+          </div>
+        </div>
+        <div id="sellerOrders" class="empty">尚未加载</div>
+      </div>
+      <div class="card">
+        <h2 style="margin-bottom:10px">发货</h2>
         <div class="grid c4">
           <div>
-            <label>运单号（发货用）</label>
-            <input id="trackingInput" placeholder="YW123456789">
+            <label>订单号</label>
+            <input id="shipOrderId" placeholder="ORD-…">
           </div>
           <div>
             <label>物流商</label>
-            <input id="carrierInput" value="燕文">
+            <select id="shipCarrier">
+              <option value="燕文">燕文</option>
+              <option value="云途">云途</option>
+              <option value="4PX">4PX</option>
+              <option value="顺丰国际">顺丰国际</option>
+            </select>
           </div>
           <div>
-            <label>复核人（被风控拦截时填）</label>
-            <input id="reviewerInput" placeholder="合规-张三">
+            <label>运单号</label>
+            <input id="shipTracking" placeholder="YW123456789">
           </div>
           <div>
-            <label>操作对象</label>
-            <input id="actionOrderId" placeholder="订单号">
+            <label>&nbsp;</label>
+            <button class="btn" id="btnShipOrder">确认发货</button>
           </div>
         </div>
-        <div class="actions">
-          <button class="btn ghost" id="btnShip">发货</button>
-          <button class="btn ghost" id="btnReceive">确认收货</button>
-          <button class="btn" id="btnRelease">释放担保资金</button>
+        <pre class="out" id="sellerOut">等待操作…</pre>
+      </div>
+      <div class="card ruleCard">
+        <h2>卖家这一端能做什么、不能做什么</h2>
+        <div class="ruleGrid">
+          <div class="ruleCol can">
+            <div class="ruleHead">可以操作</div>
+            <ul>
+              <li>查看本店待发货订单</li>
+              <li>发货并上传运单号、揽收信息</li>
+              <li>对售后申请提交举证或申诉</li>
+              <li>查看担保账户余额，支取已结算货款</li>
+            </ul>
+          </div>
+          <div class="ruleCol cannot">
+            <div class="ruleHead">不能操作</div>
+            <ul>
+              <li>不能直接退款给买家，退款只能由平台裁决执行</li>
+              <li>不能提前支取担保中（未释放）的货款</li>
+              <li>不能修改风险规则或隐藏运单记录</li>
+            </ul>
+          </div>
         </div>
-        <pre class="out" id="orderOut">选择订单后在这里看详情…</pre>
       </div>
     </section>
 
-    <!-- 风控 -->
-    <section class="view" id="view-risk">
-      <h2>双引擎风控</h2>
-      <p class="hint">规则库存在数据库里，改规则不用改代码；模型为纯 Python 逻辑回归，每个特征对分数的贡献可直接解释。</p>
+    <section class="view" id="view-s-aftersales">
+      <h2>卖家：售后申诉（买家恶意退款）</h2>
+      <p class="hint">买家以“未收到货”为由拒付、而物流实际已签收时，卖家可以发起恶意退款申诉。系统自动核对运单签收状态：主张成立则全额释放货款给商户，并把该买家标记为欺诈；主张不成立则转平台人工仲裁。</p>
+      <div class="card">
+        <div class="grid c3">
+          <div>
+            <label>订单号</label>
+            <input id="sellerClaimOrderId" placeholder="ORD-…">
+          </div>
+          <div>
+            <label>原始运单号</label>
+            <input id="sellerClaimTracking" placeholder="YW202611180001">
+          </div>
+          <div>
+            <label>签收证明</label>
+            <label class="checkLine"><input type="checkbox" id="sellerClaimSigned" checked> 物流轨迹显示已签收</label>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnSellerClaim">发起恶意退款申诉</button>
+        </div>
+        <pre class="out" id="sellerClaimOut">等待操作…</pre>
+      </div>
+      <div class="card">
+        <h2 style="margin-bottom:10px">查询纠纷进展</h2>
+        <div class="grid c2">
+          <div>
+            <label>纠纷号</label>
+            <input id="sellerDisputeId" placeholder="DP…">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="btnSellerDisputeQuery">查看该纠纷</button>
+          </div>
+        </div>
+        <pre class="out" id="sellerDisputeOut">等待操作…</pre>
+      </div>
+    </section>
+
+    <section class="view" id="view-s-escrow">
+      <h2>卖家：担保账户与结算</h2>
+      <p class="hint">担保账户里分三笔：担保中（不可提）、已结算（可提）、已退款。平台服务费按 0.6% 从结算额中扣除。</p>
+      <div class="card">
+        <div class="grid c3">
+          <div>
+            <label>查看账户</label>
+            <select id="escrowSellerSel"></select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="btnLoadEscrow">查询账户</button>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn" id="btnWithdraw">支取已结算货款</button>
+          </div>
+        </div>
+        <div class="escrowCards" id="escrowCards"></div>
+        <div id="escrowLedger" class="empty">查询后显示流水</div>
+      </div>
+      <div class="card">
+        <h2>结算规则（本平台口径）</h2>
+        <div class="ruleTable">
+          <div><span>平台服务费</span><b>0.60%（60 bps，按分向下取整）</b></div>
+          <div><span>担保期</span><b>签收后 72 小时自动释放</b></div>
+          <div><span>人工复核场景</span><b>担保期延长至 168 小时</b></div>
+          <div><span>放款前提</span><b>物流签收 + 无未结纠纷 + 风险复核通过</b></div>
+          <div><span>退款方式</span><b>反向新交易，不回滚原支付</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 平台端 ============ -->
+    <section class="view" id="view-p-overview">
+      <h2>平台：交易总览</h2>
+      <p class="hint">平台方既不买东西也不卖东西，只做风控、担保托管、纠纷裁决和存证。这里看到的是全平台聚合口径。</p>
+      <div class="actions">
+        <button class="btn ghost" id="btnPlatformRefresh">刷新总览</button>
+      </div>
+      <div class="statGrid" id="platformStats"></div>
+      <div class="card">
+        <div id="platformOrders" class="empty">尚未加载</div>
+      </div>
+      <div class="card">
+        <h2>主体状态治理（平台治理动作）</h2>
+        <p class="hint">卖家提出恶意退款申诉且主张成立时，系统会自动给买家打上欺诈标记，该买家后续下单会被硬规则拦截。平台在这里复核并清除标记，这也是误判纠正的通道。</p>
+        <div class="grid c4" style="margin-top:10px">
+          <div>
+            <label>主体</label>
+            <select id="govParty"></select>
+          </div>
+          <div>
+            <label>字段</label>
+            <select id="govField">
+              <option value="fraud_tag">欺诈标记 fraud_tag</option>
+              <option value="chargeback_cnt">历史拒付 chargeback_cnt</option>
+              <option value="refund_7d">近 7 天退款 refund_7d</option>
+            </select>
+          </div>
+          <div>
+            <label>设为</label>
+            <input id="govValue" type="number" min="0" value="0">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="btnGovSet">应用</button>
+          </div>
+        </div>
+        <pre class="out" id="govOut">等待操作…</pre>
+      </div>
+    </section>
+
+    <section class="view" id="view-p-risk">
+      <h2>平台：双引擎风控</h2>
+      <p class="hint">规则库存数据库，改规则不改代码；模型为纯 Python 逻辑回归，每个特征的贡献可直接解释。只有平台端能启停规则。</p>
       <div class="card">
         <div class="actions" style="margin-top:0">
           <button class="btn ghost" id="btnReloadRules">刷新规则</button>
@@ -127,65 +405,10 @@
       </div>
     </section>
 
-    <!-- 担保账本 -->
-    <section class="view" id="view-escrow">
-      <h2>担保子钱包</h2>
-      <p class="hint">货款先进入商户专属担保账户，履约或裁决后才释放；每笔变动都写进哈希链账本。</p>
+    <section class="view" id="view-p-arbitrate">
+      <h2>平台：纠纷仲裁</h2>
+      <p class="hint">自动核验不通过的纠纷转到这里。裁决结果直接驱动放款或退款，并写进账本。</p>
       <div class="card">
-        <div class="grid c3">
-          <div>
-            <label>商户</label>
-            <select id="escrowSellerSel"></select>
-          </div>
-          <div>
-            <label>&nbsp;</label>
-            <button class="btn ghost" id="btnLoadEscrow">查询账户</button>
-          </div>
-        </div>
-        <pre class="out" id="escrowOut">选择商户后查询…</pre>
-      </div>
-    </section>
-
-    <!-- 售后 -->
-    <section class="view" id="view-aftersales">
-      <h2>售后与仲裁</h2>
-      <p class="hint">五类场景各有举证要求。能自动核验的直接结算，验不了的转人工仲裁。</p>
-      <div class="card">
-        <div class="grid c3">
-          <div>
-            <label>订单号</label>
-            <input id="disputeOrderId" placeholder="订单号">
-          </div>
-          <div>
-            <label>场景</label>
-            <select id="disputeType">
-              <option value="no_reason_return">7天无理由全额退货</option>
-              <option value="partial_damage">部分货损/少发漏发</option>
-              <option value="fake_delivery">卖家虚假发货/空包</option>
-              <option value="malicious_refund">买家恶意退款</option>
-              <option value="logistics_loss">跨境物流丢件/破损</option>
-            </select>
-          </div>
-          <div>
-            <label>举证方</label>
-            <select id="disputeClaimant">
-              <option value="buyer">买家</option>
-              <option value="seller">卖家</option>
-              <option value="logistics">物流方</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:10px">
-          <label>证据（JSON）</label>
-          <textarea id="disputeEvidence">{"return_signed": true}</textarea>
-        </div>
-        <div class="actions">
-          <button class="btn" id="btnOpenDispute">发起售后</button>
-        </div>
-        <pre class="out" id="disputeOut">等待操作…</pre>
-      </div>
-      <div class="card">
-        <h2 style="margin-bottom:10px">人工仲裁</h2>
         <div class="grid c4">
           <div>
             <label>纠纷号</label>
@@ -205,20 +428,20 @@
           </div>
         </div>
         <div style="margin-top:10px">
-          <label>裁决说明</label>
-          <input id="arbNote" placeholder="依据开箱视频，按 1/3 赔付">
+          <label>裁决依据</label>
+          <input id="arbNote" placeholder="例：依据开箱视频与揽收重量，按 1/3 赔付">
         </div>
         <div class="actions">
+          <button class="btn ghost" id="btnArbQuery">查看纠纷详情</button>
           <button class="btn" id="btnArbitrate">执行裁决</button>
         </div>
         <pre class="out" id="arbOut">等待操作…</pre>
       </div>
     </section>
 
-    <!-- 审计 -->
-    <section class="view" id="view-audit">
-      <h2>存证审计</h2>
-      <p class="hint">账本只追加，条目之间用 SHA-256 串成链；锚定把 Merkle 根写进存证层（当前是 Mock，换成联盟链 SDK 即可）。</p>
+    <section class="view" id="view-p-audit">
+      <h2>平台：存证审计</h2>
+      <p class="hint">账本只追加，条目之间 SHA-256 串链；锚定把 Merkle 根写入存证层。任何人改动历史条目都会导致校验失败。</p>
       <div class="card">
         <div class="actions" style="margin-top:0">
           <button class="btn" id="btnVerify">校验哈希链</button>
@@ -232,10 +455,9 @@
       </div>
     </section>
 
-    <!-- 指标 -->
-    <section class="view" id="view-metrics">
-      <h2>业务指标与一致性</h2>
-      <p class="hint">拦截率、履约释放、纠纷率、账本健康度；一致性核对用来发现"账已记、钱没到"的尾巴。</p>
+    <section class="view" id="view-p-metrics">
+      <h2>平台：指标与一致性</h2>
+      <p class="hint">拦截率、履约释放、纠纷率、账本健康度。一致性核对用来找出「账已记、钱没到」的尾巴。</p>
       <div class="card">
         <div class="actions" style="margin-top:0">
           <button class="btn ghost" id="btnMetrics">刷新指标</button>
@@ -244,6 +466,7 @@
         <pre class="out" id="metricsOut">等待操作…</pre>
       </div>
     </section>
+
   </main>
 </div>
 

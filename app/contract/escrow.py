@@ -115,6 +115,31 @@ def refund_to_buyer(conn: sqlite3.Connection, *, seller_id: str, order_id: str, 
     return {"locked_cents": locked_after, "refunded_cents": refunded_after}
 
 
+def withdraw(conn: sqlite3.Connection, *, seller_id: str, amount_cents: int, ref_no: str,
+             memo: str = "商户结算提现") -> dict:
+    """把已结算余额提现到商户收款账户。
+
+    只动 settled_cents，绝不动 locked_cents：担保中的钱商户拿不到，
+    这是担保交易和普通账期的根本区别。
+    """
+    ensure_account(conn, seller_id)
+    acc = account(conn, seller_id)
+    if acc["frozen"]:
+        raise conflict("SELLER_ACCOUNT_FROZEN", "商户担保账户处于冻结状态，暂不能提现",
+                       {"reason": acc["frozen_reason"]})
+    if amount_cents <= 0 or amount_cents > acc["settled_cents"]:
+        raise conflict("INSUFFICIENT_SETTLED_FUNDS", "提现金额超过已结算余额",
+                       {"settled_cents": acc["settled_cents"], "requested_cents": amount_cents})
+    settled_after = acc["settled_cents"] - amount_cents
+    conn.execute("UPDATE escrow_accounts SET settled_cents=?, updated_at=? WHERE seller_id=?",
+                 (settled_after, now_iso(), seller_id))
+    _write(conn, seller_id=seller_id, order_id=None, entry_type="WITHDRAW",
+           amount_cents=-amount_cents, locked_after=acc["locked_cents"],
+           settled_after=settled_after, ref_no=ref_no, memo=memo)
+    return {"withdrawn_cents": amount_cents, "settled_cents": settled_after,
+            "locked_cents": acc["locked_cents"]}
+
+
 def freeze(conn: sqlite3.Connection, *, seller_id: str, reason: str) -> dict:
     ensure_account(conn, seller_id)
     acc = account(conn, seller_id)

@@ -31,6 +31,12 @@ class TopUpIn(BaseModel):
     amount_cents: int = Field(gt=0)
 
 
+class FlagIn(BaseModel):
+    field: str = Field(description="fraud_tag / chargeback_cnt / refund_7d / address_flag / "
+                                   "device_change / ip_country_mismatch")
+    value: int = Field(ge=0)
+
+
 @router.post("/parties", status_code=201, summary="新增/更新交易主体画像")
 def upsert_party(body: PartyIn, conn: sqlite3.Connection = Depends(get_conn)):
     wallet = body.wallet_id or ("W-" + body.party_id)
@@ -79,6 +85,23 @@ def topup(body: TopUpIn, conn: sqlite3.Connection = Depends(get_conn)):
     return {"wallet_id": body.wallet_id, "balance_cents": new}
 
 
+@router.post("/parties/{party_id}/flags", summary="平台治理：复核并清除/设置主体风控标记")
+def set_party_flag(party_id: str, body: FlagIn, conn: sqlite3.Connection = Depends(get_conn)):
+    row = conn.execute("SELECT profile FROM parties WHERE party_id=?", (party_id,)).fetchone()
+    if not row:
+        raise not_found(f"交易主体 {party_id}")
+    profile = json.loads(row["profile"] or "{}")
+    profile[body.field] = body.value
+    with tx(conn) as c:
+        c.execute("UPDATE parties SET profile=? WHERE party_id=?",
+                  (json.dumps(profile, ensure_ascii=False), party_id))
+        c.execute("INSERT INTO events(topic,aggregate_id,payload,created_at) VALUES(?,?,?,?)",
+                  ("party.flag_set", party_id,
+                   json.dumps({"field": body.field, "value": body.value}, ensure_ascii=False),
+                   now_iso()))
+    return {"party_id": party_id, "field": body.field, "value": body.value, "profile": profile}
+
+
 @router.get("/metrics", summary="业务指标：转化、拦截率、纠纷率、账本健康度")
 def metrics(conn: sqlite3.Connection = Depends(get_conn)):
     orders = conn.execute("SELECT COUNT(*) AS n FROM orders").fetchone()["n"]
@@ -91,8 +114,9 @@ def metrics(conn: sqlite3.Connection = Depends(get_conn)):
     released = conn.execute("SELECT COALESCE(SUM(released_cents),0) AS v FROM contracts").fetchone()["v"]
     refunded = conn.execute("SELECT COALESCE(SUM(refunded_cents),0) AS v FROM contracts").fetchone()["v"]
     disputes = conn.execute("SELECT COUNT(*) AS n FROM disputes").fetchone()["n"]
-    arbitrating = conn.execute("SELECT COUNT(*) AS n FROM disputes WHERE status='arbitrating'"
-                               ).fetchone()["n"]
+    arbitrating = conn.execute(
+        "SELECT COUNT(*) AS n FROM disputes WHERE status IN ('arbitration','arbitrating')"
+    ).fetchone()["n"]
     risk = conn.execute(
         "SELECT COUNT(*) AS n, COALESCE(AVG(final_score),0) AS avg_score FROM risk_records"
     ).fetchone()

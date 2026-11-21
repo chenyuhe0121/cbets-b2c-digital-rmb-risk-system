@@ -13,3 +13,8 @@ data/server*.log
 .vscode/
 .DS_Store
 Thumbs.db
+
+# 本地备份与运行日志
+_backup/
+_run_out.log
+_run_err.log
